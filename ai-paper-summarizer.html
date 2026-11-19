@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PaperEase AI | Research Paper Summarizer - जटिल शोध पत्र को बनाएं आसान</title>
+  <meta name="description" content="AI Research Paper Summarizer - किसी भी रिसर्च पेपर (PDF या टेक्स्ट) को अपलोड करें और पाएं अत्यंत सरल, समझने योग्य सारांश (Hinglish/Hindi/English), रियल-लाइफ एनालॉजी, ऑडियो सार और AI चैट।">
+
+  <!-- Google Fonts: Inter & Noto Sans Devanagari -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Main Summarizer Stylesheet -->
+  <link rel="stylesheet" href="css/summarizer.css">
+
+  <!-- PDF.js from Cloudflare CDN for Client-Side PDF Parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+</head>
+<body class="summarizer-app" data-theme="light">
+
+  <!-- ======================================================================
+       App Header
+       ====================================================================== -->
+  <header class="app-header">
+    <div class="summarizer-container header-content">
+      <a href="ai-paper-summarizer.html" class="logo-group">
+        <div class="logo-badge-icon">⚡</div>
+        <div>
+          <div class="logo-title">
+            <span>PaperEase</span><span class="highlight">AI</span>
+            <span class="logo-tag">RESEARCH COPILOT</span>
+          </div>
+        </div>
+      </a>
+
+      <div class="header-actions">
+        <a href="index.html" class="btn-header-secondary" title="ExamNotes Hub मुख्य पोर्टल पर जाएं">
+          <span>📚</span>
+          <span>ExamNotes Hub</span>
+        </a>
+
+        <div id="apiStatusBadge" class="logo-tag" style="cursor: pointer;" title="API और इंजन सेटिंग्स" onclick="document.getElementById('btnOpenSettings').click();">
+          🟢 Offline Smart NLP Engine
+        </div>
+
+        <button class="btn-icon-round" id="btnOpenSettings" title="API Key सेटिंग्स">
+          ⚙️
+        </button>
+
+        <button class="btn-icon-round" id="themeToggleBtn" title="डार्क / लाइट मोड बदलें">
+          🌙
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       Main Content Container
+       ====================================================================== -->
+  <main class="summarizer-container">
+    
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+      <div class="hero-pill">
+        <span>✨ 100% Free AI Research Paper Simplifier &amp; Layman Explainer</span>
+      </div>
+
+      <h1 class="hero-headline">
+        जटिल रिसर्च पेपर को बनाइए <span class="highlight">100% समझने में आसान</span> 🚀
+      </h1>
+
+      <p class="hero-subheadline">
+        कोई भी कठिन शोध पत्र (PDF या टेक्स्ट) अपलोड करें — हमारा AI भारी-भरकम जार्गन और गणित को हटाकर आसान कहानियों, मुख्य खोजों, ऑडियो सार और इंटरैक्टिव चैट में बदल देता है।
+      </p>
+    </section>
+
+    <!-- Upload & Input Card -->
+    <section class="uploader-card-box">
+      <!-- Tabs -->
+      <div class="upload-tabs">
+        <button class="upload-tab-btn active" data-tab="upload" id="tabUpload">
+          <span>📁</span>
+          <span>PDF / डॉक्यूमेंट अपलोड करें</span>
+        </button>
+        <button class="upload-tab-btn" data-tab="paste" id="tabPaste">
+          <span>📋</span>
+          <span>टेक्स्ट या एब्स्ट्रैक्ट पेस्ट करें</span>
+        </button>
+      </div>
+
+      <!-- Tab 1: Drop Zone File Upload -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".pdf,.txt,.docx,.md" style="display: none;">
+        <div class="drop-icon-wrapper">📄</div>
+        <h3 class="drop-title">रिसर्च पेपर PDF यहाँ ड्रैग &amp; ड्रॉप करें</h3>
+        <p class="drop-subtitle">या अपने कंप्यूटर से फ़ाइल चुनने के लिए क्लिक करें (सपोर्ट: PDF, TXT, MD)</p>
+        <span class="drop-btn">⚡ फ़ाइल चुनें और तुरंत सार निकालें</span>
+      </div>
+
+      <!-- Tab 2: Paste Raw Text Area -->
+      <div class="paste-box-area" id="pasteArea">
+        <input type="text" id="pasteTitleInput" class="paste-textarea" style="height: 48px; margin-bottom: 12px;" placeholder="रिसर्च पेपर का शीर्षक (जैसे: Attention Is All You Need)">
+        <textarea id="pasteTextInput" class="paste-textarea" placeholder="यहाँ रिसर्च पेपर का पूरा टेक्स्ट या एब्स्ट्रैक्ट (Abstract) पेस्ट करें..."></textarea>
+        <div class="paste-actions">
+          <span style="font-size: 0.85rem; color: var(--text-muted-light);">💡 सुझाव: कम से कम 100 शब्द पेस्ट करें ताकि AI सटीक विश्लेषण कर सके।</span>
+          <button class="drop-btn" id="summarizePastedBtn" style="pointer-events: auto; border: none; cursor: pointer;">
+            🚀 सार (Summary) तैयार करें
+          </button>
+        </div>
+      </div>
+
+      <!-- 1-Click Demo Preloaded Papers -->
+      <div class="sample-shelf-header">
+        <div class="sample-shelf-title">
+          <span>💡 तुरंत टेस्ट करने के लिए प्रसिद्ध रिसर्च पेपर चुनें (1-Click Demo):</span>
+        </div>
+      </div>
+
+      <div class="sample-cards-grid">
+        <button class="sample-paper-btn" data-sample-id="transformer-attention">
+          <span class="sample-tag">🤖 AI &amp; Deep Learning</span>
+          <span class="sample-name">Attention Is All You Need</span>
+          <span class="sample-meta">Vaswani et al. (Transformers &amp; ChatGPT Base)</span>
+        </button>
+
+        <button class="sample-paper-btn" data-sample-id="crispr-cas9-therapeutics">
+          <span class="sample-tag">🧬 Genetics &amp; Medicine</span>
+          <span class="sample-name">CRISPR-Cas9 Genome Editing</span>
+          <span class="sample-meta">Doudna &amp; Charpentier (Nobel Prize in Chemistry)</span>
+        </button>
+
+        <button class="sample-paper-btn" data-sample-id="quantum-supremacy">
+          <span class="sample-tag">⚛️ Quantum Computing</span>
+          <span class="sample-name">Quantum Supremacy (Sycamore)</span>
+          <span class="sample-meta">Google Quantum AI (10,000 yrs vs 200 secs)</span>
+        </button>
+
+        <button class="sample-paper-btn" data-sample-id="ai-cancer-detection">
+          <span class="sample-tag">🩺 Healthcare &amp; Radiology</span>
+          <span class="sample-name">AI System for Breast Cancer Screening</span>
+          <span class="sample-meta">Nature 2020 (Google Health &amp; DeepMind)</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Processing Animation Card -->
+    <section class="processing-card" id="processingCard">
+      <div class="scanner-spinner"></div>
+      <div class="processing-step-text" id="processingStep">फ़ाइल का विश्लेषण किया जा रहा है...</div>
+      <p class="processing-sub-text">कठिन गणितीय शब्दों को हटाकर आसान भाषा में बदला जा रहा है...</p>
+    </section>
+
+    <!-- ======================================================================
+         Summary Results Dashboard
+         ====================================================================== -->
+    <section class="results-dashboard" id="resultsDashboard">
+      
+      <!-- Meta Stats Banner -->
+      <div class="paper-meta-banner">
+        <div class="paper-title-group">
+          <h2 id="paperTitle">Attention Is All You Need</h2>
+          <div class="paper-authors-line" id="paperAuthors">शोधकर्ता: Ashish Vaswani et al.</div>
+        </div>
+
+        <div class="time-savings-pill">
+          <span>⏱️ मूल पेपर: <strong id="originalTime">45 mins</strong></span>
+          <span>➔</span>
+          <span>⚡ आसान सार: <strong id="summaryTime">2 mins</strong></span>
+          <span style="background: var(--accent-emerald); color: #fff; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem;">🔥 95% समय की बचत!</span>
+        </div>
+      </div>
+
+      <!-- Control Toolbar: Language, Level, Audio, Actions -->
+      <div class="control-toolbar">
+        <!-- Language Switcher -->
+        <div class="toolbar-group">
+          <span class="toolbar-label">भाषा:</span>
+          <div class="filter-btn-group">
+            <button class="filter-chip active" data-lang="hinglish">🇮🇳 Hinglish</button>
+            <button class="filter-chip" data-lang="english">🌐 Simple English</button>
+            <button class="filter-chip" data-lang="hindi">🇮🇳 सरल हिंदी</button>
+          </div>
+        </div>
+
+        <!-- Complexity Level -->
+        <div class="toolbar-group">
+          <span class="toolbar-label">सरलता स्तर:</span>
+          <div class="filter-btn-group">
+            <button class="filter-chip active" data-level="eli10">👶 ELI10 (10 साल के बच्चे जैसा सरल)</button>
+            <button class="filter-chip" data-level="executive">👔 1-Min Executive सार</button>
+            <button class="filter-chip" data-level="academic">🔬 Detailed Breakdown</button>
+          </div>
+        </div>
+
+        <!-- Audio Readout & Actions -->
+        <div class="toolbar-group">
+          <button class="btn-audio-listen" id="btnListenAudio">
+            <span>🔊</span>
+            <span>ऑडियो सार सुनें</span>
+          </button>
+          <button class="btn-header-secondary" id="btnCopySummary" title="सारांश कॉपी करें">
+            <span>📋</span>
+            <span>कॉपी</span>
+          </button>
+          <button class="btn-header-secondary" id="btnDownloadTxt" title="टेक्स्ट फ़ाइल डाउनलोड करें">
+            <span>📥</span>
+            <span>डाउनलोड</span>
+          </button>
+          <button class="btn-header-secondary" id="btnPrintReport" title="प्रिंट / PDF सेव करें">
+            <span>🖨️</span>
+            <span>प्रिंट</span>
+          </button>
+          <button class="btn-header-secondary" id="btnReset" title="नया पेपर अपलोड करें" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+            <span>🔄</span>
+            <span>नया पेपर</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           Bento Summary Grid
+           ==================================================================== -->
+      <div class="bento-summary-grid">
+        
+        <!-- 1. The Core Big Idea (1-Line Punchline) -->
+        <div class="bento-card col-12 card-core-idea">
+          <div class="card-badge-header">
+            <div class="card-badge-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary-ai);">🌟</div>
+            <h3>मुख्य विचार (The Core Big Idea in 1 Line)</h3>
+          </div>
+          <p class="core-punchline-text" id="corePunchline">
+            यह शोध पत्र ट्रांसफार्मर आर्किटेक्चर पेश करता है, जिसने AI को एक साथ पूरे वाक्य को समझने की सुपरपावर दी।
+          </p>
+        </div>
+
+        <!-- 2. Simple Analogy (Explain Like I'm 10) -->
+        <div class="bento-card col-12 card-analogy">
+          <div class="card-badge-header">
+            <div class="card-badge-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-amber);">👶</div>
+            <h3>सरल कहानी / उदाहरण (Explain Like I'm 10 Analogy)</h3>
+          </div>
+          <div class="analogy-quote" id="analogyQuote">
+            मान लीजिए आप एक अंधेरे कमरे में बड़ी किताब पढ़ रहे हैं...
+          </div>
+        </div>
+
+        <!-- 3. The Problem & Why It Matters -->
+        <div class="bento-card col-6">
+          <div class="card-badge-header">
+            <div class="card-badge-icon" style="background: rgba(239, 68, 68, 0.12); color: #ef4444;">🎯</div>
+            <h3>समस्या क्या थी? (Why This Matters)</h3>
+          </div>
+          <p id="problemDesc" style="font-size: 0.95rem; line-height: 1.6;">
+            पुराने AI मॉडल्स शब्दों को एक-एक करके लाइन में प्रोसेस करते थे...
+          </p>
+        </div>
+
+        <!-- 4. How They Solved It (Methodology Simplified) -->
+        <div class="bento-card col-6">
+          <div class="card-badge-header">
+            <div class="card-badge-icon" style="background: rgba(6, 182, 212, 0.12); color: var(--accent-cyan);">⚙️</div>
+            <h3>समाधान कैसे निकाला? (Methodology in Plain Steps)</h3>
+          </div>
+          <p id="methodSteps" style="font-size: 0.95rem; line-height: 1.6;">
+            शोधकर्ताओं ने केवल 'सेल्फ-अटेंशन' तंत्र का उपयोग किया...
+          </p>
+        </div>
+
+        <!-- 5. Key Findings & Breakthroughs -->
+        <div class="bento-card col-6">
+          <div class="card-badge-header">
+            <div class="card-badge-icon" style="background: rgba(16, 185, 129, 0.12); color: var(--accent-emerald);">📊</div>
+            <h3>मुख्य खोजें और नतीजे (Key Breakthroughs &amp; Stats)</h3>
+          </div>
+          <ul class="findings-list" id="findingsList">
+            <!-- Populated via JS -->
+          </ul>
+        </div>
+
+        <!-- 6. Limitations & Weaknesses -->
+        <div class="bento-card col-6">
+          <div class="card-badge-header">
+            <div class="card-badge-icon" style="background: rgba(245, 158, 11, 0.12); color: var(--accent-amber);">⚖️</div>
+            <h3>कमियां और चुनौतियां (Limitations &amp; Trade-offs)</h3>
+          </div>
+          <ul class="limitations-list" id="limitationsList">
+            <!-- Populated via JS -->
+          </ul>
+        </div>
+
+        <!-- 7. Real-World Future Impact -->
+        <div class="bento-card col-12" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%); border-left: 5px solid var(--accent-emerald);">
+          <div class="card-badge-header">
+            <div class="card-badge-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">🌍</div>
+            <h3>हमारे जीवन और भविष्य पर क्या असर पड़ेगा? (Real-World Impact)</h3>
+          </div>
+          <p id="realWorldImpact" style="font-size: 1.05rem; font-weight: 500; line-height: 1.6;">
+            आज के सभी बड़े AI टूल्स—ChatGPT, Google Gemini, Midjourney—इसी रिसर्च पेपर के आर्किटेक्चर पर काम कर रहे हैं।
+          </p>
+        </div>
+
+        <!-- 8. Jargon Buster Dictionary -->
+        <div class="bento-card col-12">
+          <div class="card-badge-header">
+            <div class="card-badge-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary-ai);">📖</div>
+            <h3>कठिन शब्दों का सरल शब्दकोश (Jargon Buster)</h3>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--text-muted-light); margin-bottom: 14px;">
+            इस रिसर्च पेपर में प्रयुक्त जटिल तकनीकी शब्दों का सरल और स्पष्ट अर्थ:
+          </p>
+          <div class="jargon-grid" id="jargonGrid">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ====================================================================
+           Interactive "Chat with Paper" (शोध पत्र से सवाल पूछें)
+           ==================================================================== -->
+      <section class="chat-paper-container">
+        <div class="chat-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="card-badge-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary-ai);">💬</div>
+            <div>
+              <h3 style="font-size: 1.15rem; font-weight: 700;">शोध पत्र से सीधे सवाल पूछें (Chat with Paper)</h3>
+              <p style="font-size: 0.82rem; color: var(--text-muted-light);">इस पेपर के किसी भी हिस्से, गणित या निष्कर्ष पर तुरंत सरल उत्तर पाएं।</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Prompt Chips -->
+        <div class="chat-suggestions">
+          <button class="suggestion-chip">💡 क्या मैं इसे कॉलेज प्रोजेक्ट में यूज़ कर सकता हूँ?</button>
+          <button class="suggestion-chip">🔍 पुराने तरीकों की तुलना में यह कितना बेहतर है?</button>
+          <button class="suggestion-chip">⚠️ इस पेपर की सबसे बड़ी कमी क्या है?</button>
+          <button class="suggestion-chip">✦ इसके पीछे का गणित 2 लाइनों में समझाएं</button>
+        </div>
+
+        <!-- Chat Feed -->
+        <div class="chat-message-feed" id="chatMessageFeed">
+          <div class="chat-bubble ai">
+            नमस्ते! मैंने इस शोध पत्र का पूरा अध्ययन कर लिया है। आप मुझसे कोई भी सवाल पूछ सकते हैं!
+          </div>
+        </div>
+
+        <!-- Chat Input Field -->
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" class="chat-input-field" placeholder="इस शोध पत्र के बारे में अपना सवाल यहाँ लिखें... (Enter दबाएं)">
+          <button class="chat-send-btn" id="btnSendChat">पूछें ➔</button>
+        </div>
+      </section>
+
+    </section>
+
+  </main>
+
+  <!-- ======================================================================
+       Settings Modal (Gemini API Key)
+       ====================================================================== -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-content-card">
+      <button class="modal-close-btn" id="btnCloseSettings">&times;</button>
+      
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+        <span style="font-size: 1.5rem;">⚙️</span>
+        <h3 style="font-size: 1.25rem; font-weight: 800;">AI इंजन व API सेटिंग्स</h3>
+      </div>
+
+      <p style="font-size: 0.9rem; color: var(--text-muted-light); margin-bottom: 18px; line-height: 1.5;">
+        यह वेबसाइट <strong>100% बिना किसी API Key के</strong> इन-बिल्ट स्मार्ट NLP इंजन से तुरंत काम करती है। यदि आप और भी अधिक गहन विश्लेषणात्मक क्षमता चाहते हैं, तो अपनी मुफ्त <strong>Google Gemini API Key</strong> जोड़ सकते हैं।
+      </p>
+
+      <div style="margin-bottom: 16px;">
+        <label for="geminiApiKeyInput" style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px;">
+          Google Gemini API Key (वैकल्पिक / Optional):
+        </label>
+        <input type="password" id="geminiApiKeyInput" class="chat-input-field" style="width: 100%;" placeholder="AIzaSy...">
+      </div>
+
+      <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 12px; margin-bottom: 18px; font-size: 0.82rem; color: var(--accent-emerald);">
+        🔒 <strong>प्राइवेसी की गारंटी:</strong> आपकी API Key केवल आपके स्थानीय ब्राउज़र (localStorage) में सुरक्षित रहती है। यह कभी किसी तीसरे पक्ष या बाहरी सर्वर पर नहीं भेजी जाती।
+      </div>
+
+      <div style="font-size: 0.82rem; color: var(--text-muted-light); margin-bottom: 20px;">
+        मुफ्त API Key कैसे पाएं? <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color: var(--primary-ai); font-weight: 700;">Google AI Studio ➔</a> पर 1 मिनट में मुफ्त की प्राप्त करें।
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn-header-secondary" id="btnClearApiKey" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+          हटाएं (Reset to Offline)
+        </button>
+        <button class="drop-btn" id="btnSaveApiKey" style="pointer-events: auto; border: none; cursor: pointer;">
+          सेव करें (Save Key)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="summarizer-container">
+      <p>⚡ <strong>PaperEase AI</strong> — शोध पत्र को सरल, सुलभ और जन-जन के लिए आसान बनाने का प्रयास।</p>
+      <p style="margin-top: 6px; font-size: 0.8rem; opacity: 0.7;">
+        ExamNotes Hub Study Portal Ecosystem &bull; Made for Students, Researchers &amp; Curious Minds
+      </p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/sample-papers.js"></script>
+  <script src="js/summarizer-engine.js"></script>
+  <script src="js/summarizer-ui.js"></script>
+</body>
+</html>
